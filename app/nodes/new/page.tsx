@@ -1,7 +1,7 @@
 // src/app/nodes/new/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "../../header";
 import { useWalletClient } from "../../lib/web3/useWalletClient";
@@ -24,6 +24,9 @@ interface NodeProfile {
   healthScore: number;
 }
 
+// Disable prerendering to ensure the page is only rendered in the browser
+export const dynamic = "force-dynamic";
+
 export default function NewNodePage() {
   const router = useRouter();
   const { address } = useWalletClient();
@@ -32,6 +35,7 @@ export default function NewNodePage() {
   const [contactEmail, setContactEmail] = useState("");
   const [certifications, setCertifications] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [metadataURI, setMetadataURI] = useState<string>(""); // State for metadataURI
 
   const availableCertifications = ["ISO9001", "ISO13485", "FDA 820"];
 
@@ -41,23 +45,28 @@ export default function NewNodePage() {
     functionName: "nextTokenId",
   });
 
-  const metadata = {
-    name,
-    description: `Manufacturing Node at ${location}`,
-    attributes: [
-      { trait_type: "Location", value: location },
-      { trait_type: "Certifications", value: certifications.join(", ") },
-      { trait_type: "Status", value: "pending" },
-      { trait_type: "Created At", value: new Date().toISOString() },
-      { trait_type: "Health Score", value: "100" },
-      { trait_type: "Escrow Balance", value: "0" },
-      { trait_type: "Capacity", value: "" }
-    ],
-  };
-  
+  // Generate metadata and metadataURI when name, location, or certifications change
+  useEffect(() => {
+    const metadata = {
+      name,
+      description: `Manufacturing Node at ${location}`,
+      attributes: [
+        { trait_type: "Location", value: location },
+        { trait_type: "Certifications", value: certifications.join(", ") },
+        { trait_type: "Status", value: "pending" },
+        { trait_type: "Created At", value: new Date().toISOString() },
+        { trait_type: "Health Score", value: "100" },
+        { trait_type: "Escrow Balance", value: "0" },
+        { trait_type: "Capacity", value: "" },
+      ],
+    };
 
-  const metadataURI =
-    "data:application/json;base64," + window.btoa(JSON.stringify(metadata));
+    // Only generate metadataURI in the browser
+    if (typeof window !== "undefined") {
+      const uri = "data:application/json;base64," + window.btoa(JSON.stringify(metadata));
+      setMetadataURI(uri);
+    }
+  }, [name, location, certifications]);
 
   const {
     write: mintNode,
@@ -98,6 +107,10 @@ export default function NewNodePage() {
     const nodeId = nextTokenId?.toString();
     if (!nodeId) {
       setError("Invalid token ID");
+      return;
+    }
+    if (!metadataURI) {
+      setError("Metadata URI is not generated yet.");
       return;
     }
 
