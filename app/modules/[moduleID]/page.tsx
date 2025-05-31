@@ -1,5 +1,8 @@
+// --- src/app/modules/[moduleID]/page.tsx ---
+
 "use client";
 
+import { useParams } from "next/navigation";
 import { Header } from "../../header";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -23,8 +26,11 @@ interface Module {
   additionalMeta?: Record<string, any>;
 }
 
-export default function ModuleDetailPage({ params }: { params: { moduleID?: string } }) {
-  if (!params.moduleID) {
+export default function ModuleDetailPage() {
+  const params = useParams(); // Get dynamic route parameters
+  const moduleID = params.moduleID as string | undefined; // Type assertion
+
+  if (!moduleID) {
     return (
       <>
         <Header />
@@ -37,7 +43,7 @@ export default function ModuleDetailPage({ params }: { params: { moduleID?: stri
   }
 
   const allModules = JSON.parse(localStorage.getItem("moduleRegistry") || "[]") as Module[];
-  const module = allModules.find((m) => m.moduleId === params.moduleID);
+  const module = allModules.find((m) => m.moduleId === moduleID);
 
   if (!module) {
     return (
@@ -45,7 +51,7 @@ export default function ModuleDetailPage({ params }: { params: { moduleID?: stri
         <Header />
         <main className="px-6 py-10">
           <h1 className="text-4xl font-bold mb-6">Module Not Found</h1>
-          <p>Module ID: {params.moduleID}</p>
+          <p>Module ID: {moduleID}</p>
         </main>
       </>
     );
@@ -122,7 +128,6 @@ export default function ModuleDetailPage({ params }: { params: { moduleID?: stri
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-4">📖 Module Details</h2>
           <p className="text-muted-foreground mb-6">{module.description}</p>
-
           {/* Readme Viewer (optional later) */}
           {/* Future: Support module.readme here */}
         </section>
