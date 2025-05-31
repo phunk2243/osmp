@@ -3,17 +3,14 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import { Header } from "../../../header";
 import { mockInventory, InventoryItem } from "../../../lib/mockInventory";
 
-interface NodeInventoryPageProps {
-  params: {
-    nodeID: string;
-  };
-}
+export default function NodeInventoryPage() {
+  const params = useParams(); // Get dynamic params
+  const nodeID = params.nodeID as string; // Type assertion for nodeID
 
-export default function NodeInventoryPage({ params }: NodeInventoryPageProps) {
-  const { nodeID } = params;
   const [filterType, setFilterType] = useState<string>("All");
   const [filterSKU, setFilterSKU] = useState<string>("All");
 
